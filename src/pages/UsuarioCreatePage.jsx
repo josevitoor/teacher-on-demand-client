@@ -7,6 +7,7 @@ import {
     Input,
     InputNumber,
     message,
+    Select,
     Typography,
 } from "antd";
 import { useNavigate } from "react-router-dom";
@@ -85,11 +86,54 @@ const UsuarioCreatePage = () => {
                     {(isProfessor || isPessoaFisica) && (
                         <>
                             <Form.Item label="CPF" name="cpf" rules={[{ required: true, message: "Informe o CPF" }]}>
-                                <Input maxLength={11} minLength={11}/>
+                                <Input maxLength={11} minLength={11} />
                             </Form.Item>
 
                             <Form.Item label="Data de nascimento" name="dataNascimento" rules={[{ required: true, message: "Informe a data de nascimento" }]}>
                                 <DatePicker style={{ width: "100%" }} format="DD/MM/YYYY" />
+                            </Form.Item>
+                        </>
+                    )}
+
+                    {isProfessor && (
+                        <>
+                            <Form.Item
+                                label="Especialidades"
+                                name="especialidades"
+                                rules={[{ required: true, message: "Selecione pelo menos uma especialidade" }]}
+                            >
+                                <Select
+                                    mode="multiple"
+                                    placeholder="Selecione as disciplinas"
+                                    options={[
+                                        { value: "Matemática", label: "Matemática" },
+                                        { value: "Português", label: "Português" },
+                                        { value: "História", label: "História" },
+                                        { value: "Geografia", label: "Geografia" },
+                                        { value: "Física", label: "Física" },
+                                        { value: "Química", label: "Química" },
+                                        { value: "Biologia", label: "Biologia" },
+                                        { value: "Inglês", label: "Inglês" },
+                                        { value: "Programação", label: "Programação" },
+                                    ]}
+                                />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="Tipo do documento"
+                                name="documentoTipo"
+                                initialValue="Comprovante de Formação"
+                                rules={[{ required: true }]}
+                            >
+                                <Input disabled />
+                            </Form.Item>
+
+                            <Form.Item
+                                label="Comprovante de formação"
+                                name="documentoArquivo"
+                                rules={[{ required: true, message: "Informe o documento" }]}
+                            >
+                                <Input placeholder="Caminho do arquivo" />
                             </Form.Item>
                         </>
                     )}
