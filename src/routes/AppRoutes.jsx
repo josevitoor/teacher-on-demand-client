@@ -2,7 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import UsuarioCreatePage from "../pages/UsuarioCreatePage";
 import SelectProfilePage from "../pages/SelectProfilePage";
-import HomePage from "../pages/HomePage";
+import InicioPage from "../pages/InicioPage";
 import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "../components/ProtectedRoute";
 
@@ -29,7 +29,7 @@ const AppRoutes = () => {
                         </ProtectedRoute>
                     }
                 >
-                    <Route path="/inicio" element={<HomePage />} />
+                    <Route path="/inicio" element={<InicioPage />} />
                 </Route>
             </Routes>
         </BrowserRouter>
