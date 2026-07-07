@@ -59,12 +59,21 @@ const MainLayout = () => {
 
     return (
         <Layout style={{ minHeight: "100vh" }}>
-            <Sider width={240}>
+            <Sider
+                width={240}
+                style={{
+                    height: "100vh",
+                    position: "fixed",
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                }}
+            >
                 <div
                     style={{
                         display: "flex",
                         flexDirection: "column",
-                        height: "100%",
+                        height: "100vh",
                     }}
                 >
                     <div
@@ -84,14 +93,19 @@ const MainLayout = () => {
                         </Text>
                     </div>
 
-                    <Menu
-                        theme="dark"
-                        mode="inline"
-                        selectedKeys={[location.pathname]}
-                        items={items}
-                    />
-
-                    <div style={{ flex: 1 }} />
+                    <div
+                        style={{
+                            flex: 1,
+                            overflowY: "auto",
+                        }}
+                    >
+                        <Menu
+                            theme="dark"
+                            mode="inline"
+                            selectedKeys={[location.pathname]}
+                            items={items}
+                        />
+                    </div>
 
                     <Menu
                         theme="dark"
@@ -102,7 +116,7 @@ const MainLayout = () => {
                 </div>
             </Sider>
 
-            <Layout>
+            <Layout style={{ marginLeft: 240 }}>
                 <Content style={{ padding: 24 }}>
                     <Outlet />
                 </Content>

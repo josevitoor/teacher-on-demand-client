@@ -24,9 +24,18 @@ import { getProfessores } from "../services/professorService";
 const { Text, Title } = Typography;
 
 const tipoServicoOptions = [
-    { value: "Aula Única", label: "Aula Única" },
-    { value: "Aula Mensal", label: "Aula Mensal" },
-    { value: "Pacote de Aulas", label: "Pacote de Aulas" },
+    {
+        value: "AULA_UNICA",
+        label: "Aula Única",
+    },
+    {
+        value: "PACOTE_AULA",
+        label: "Pacote de aulas",
+    },
+    {
+        value: "AULA_MENSAL",
+        label: "Aula mensal",
+    },
 ];
 
 const metodoPagamentoOptions = [
@@ -49,6 +58,9 @@ const AgendamentoModal = ({ open, onClose, onSuccess }) => {
         (p) => p.idProfessor === idProfessor
     );
 
+    const tipoAula = Form.useWatch("tipoAula", form);
+    const qtdAulas = Form.useWatch("qtdAulas", form);
+
     useEffect(() => {
         if (open) {
             carregarProfessores();
@@ -69,7 +81,9 @@ const AgendamentoModal = ({ open, onClose, onSuccess }) => {
 
     const next = async () => {
         try {
-            await form.validateFields(getFieldsByStep(currentStep));
+            await form.validateFields(
+                getFieldsByStep(currentStep, tipoAula)
+            );
             setCurrentStep(currentStep + 1);
         } catch {
             message.warning("Preencha os campos obrigatórios");
@@ -92,18 +106,35 @@ const AgendamentoModal = ({ open, onClose, onSuccess }) => {
             setLoading(true);
 
             const values = form.getFieldsValue(true);
-
+            debugger
             const payload = {
                 idProfessor: values.idProfessor,
                 idContratante: user.usuarioId,
 
                 tipoServico: values.tipoServico,
-                descricaoServico: values.descricaoServico,
+                tipoAula: values.tipoAula,
 
                 endereco: values.endereco,
+
                 horaInicio: values.horario[0].format("HH:mm:ss"),
                 horaFim: values.horario[1].format("HH:mm:ss"),
-                datas: values.datas.map((data) => data.format("YYYY-MM-DD")),
+
+
+                datas:
+                    values.tipoAula === "AULA_MENSAL"
+                        ? []
+                        : Array.isArray(values.datas)
+                            ? values.datas.map((d) => d.format("YYYY-MM-DD"))
+                            : values.datas
+                                ? [values.datas.format("YYYY-MM-DD")]
+                                : [],
+
+                diasSemana: values.diasSemana ?? [],
+
+                dataVencimento:
+                    values.dataVencimento?.format("YYYY-MM-DD"),
+
+                qtdAulas: values.qtdAulas,
 
                 valorTotal: values.valorTotal,
                 metodoPagamento: values.metodoPagamento,
@@ -185,33 +216,28 @@ const AgendamentoModal = ({ open, onClose, onSuccess }) => {
 
                 <div style={{ display: currentStep === 1 ? "block" : "none" }}>
                     <Form.Item
-                        label="Tipo de serviço"
-                        name="tipoServico"
-                        initialValue="Aula Única"
-                        rules={[{ required: true, message: "Informe o tipo de serviço" }]}
+                        label="Modalidade"
+                        name="tipoAula"
+                        initialValue="AULA_UNICA"
+                        rules={[{ required: true }]}
                     >
                         <Select
-                            placeholder="Selecione ou informe o tipo"
                             options={tipoServicoOptions}
                         />
                     </Form.Item>
 
                     <Form.Item
-                        label="Descrição do serviço"
-                        name="descricaoServico"
+                        label="Nome do serviço"
+                        name="tipoServico"
                         initialValue={
                             professorSelecionado?.especialidades?.length
                                 ? `Aula particular de ${professorSelecionado.especialidades[0]}`
                                 : "Aula particular"
                         }
-                        rules={[{ required: true, message: "Informe a descrição" }]}
+                        rules={[{ required: true }]}
                     >
-                        <Input placeholder="Ex: Aula particular de Matemática" />
+                        <Input placeholder="Ex.: Reforço de Matemática para ENEM" />
                     </Form.Item>
-
-                    <Text type="secondary">
-                        O serviço será criado junto com o agendamento.
-                    </Text>
                 </div>
 
                 <div style={{ display: currentStep === 2 ? "block" : "none" }}>
@@ -222,7 +248,6 @@ const AgendamentoModal = ({ open, onClose, onSuccess }) => {
                     >
                         <Input placeholder="Ex: Google Meet, escola, residência..." />
                     </Form.Item>
-
                     <Form.Item
                         label="Horário"
                         name="horario"
@@ -233,18 +258,96 @@ const AgendamentoModal = ({ open, onClose, onSuccess }) => {
                             format="HH:mm"
                         />
                     </Form.Item>
+                    {tipoAula === "AULA_MENSAL" && (
+                        <>
+                            <Form.Item
+                                label="Data de vencimento"
+                                name="dataVencimento"
+                                rules={[{ required: true }]}
+                            >
+                                <DatePicker
+                                    style={{ width: "100%" }}
+                                />
+                            </Form.Item>
 
-                    <Form.Item
-                        label="Datas da aula"
-                        name="datas"
-                        rules={[{ required: true, message: "Selecione ao menos uma data" }]}
-                    >
-                        <DatePicker
-                            multiple
-                            style={{ width: "100%" }}
-                            format="DD/MM/YYYY"
-                        />
-                    </Form.Item>
+                            <Form.Item
+                                label="Dias da semana"
+                                name="diasSemana"
+                                rules={[{ required: true }]}
+                            >
+                                <Select
+                                    mode="multiple"
+                                    options={[
+                                        { value: "SEGUNDA", label: "Segunda-feira" },
+                                        { value: "TERCA", label: "Terça-feira" },
+                                        { value: "QUARTA", label: "Quarta-feira" },
+                                        { value: "QUINTA", label: "Quinta-feira" },
+                                        { value: "SEXTA", label: "Sexta-feira" },
+                                        { value: "SABADO", label: "Sábado" },
+                                        { value: "DOMINGO", label: "Domingo" },
+                                    ]}
+                                />
+                            </Form.Item>
+                        </>
+                    )}
+
+                    {tipoAula === "PACOTE_AULA" && (
+                        <Form.Item
+                            label="Quantidade de aulas"
+                            name="qtdAulas"
+                            rules={[{ required: true }]}
+                        >
+                            <InputNumber
+                                min={1}
+                                style={{ width: "100%" }}
+                            />
+                        </Form.Item>
+                    )}
+
+                    {tipoAula !== "AULA_MENSAL" && (
+                        <Form.Item
+                            label={
+                                tipoAula === "AULA_UNICA"
+                                    ? "Data da aula"
+                                    : "Datas das aulas"
+                            }
+                            name="datas"
+                            rules={[
+                                { required: true },
+                                {
+                                    validator(_, value) {
+
+                                        if (tipoAula === "AULA_UNICA") {
+
+                                            if (!value)
+                                                return Promise.reject("Informe a data.");
+
+                                            if (Array.isArray(value) && value.length !== 1)
+                                                return Promise.reject("Apenas uma data.");
+
+                                            return Promise.resolve();
+                                        }
+
+                                        if (tipoAula === "PACOTE_AULA") {
+
+                                            if (!value || value.length !== qtdAulas)
+                                                return Promise.reject(
+                                                    `Selecione ${qtdAulas} datas.`
+                                                );
+                                        }
+
+                                        return Promise.resolve();
+                                    },
+                                },
+                            ]}
+                        >
+                            <DatePicker
+                                multiple={tipoAula === "PACOTE_AULA"}
+                                style={{ width: "100%" }}
+                                format="DD/MM/YYYY"
+                            />
+                        </Form.Item>
+                    )}
                 </div>
 
                 <div style={{ display: currentStep === 3 ? "block" : "none" }}>
@@ -325,11 +428,18 @@ const ResumoAgendamento = ({ form, user, professor }) => {
             </Text>
 
             <Text>
-                <strong>Tipo:</strong> {values.tipoServico}
+                <strong>Modalidade:</strong>{" "}
+                {
+                    {
+                        AULA_UNICA: "Aula Única",
+                        PACOTE_AULA: "Pacote de Aulas",
+                        AULA_MENSAL: "Aula Mensal",
+                    }[values.tipoAula]
+                }
             </Text>
 
             <Text>
-                <strong>Serviço:</strong> {values.descricaoServico}
+                <strong>Serviço:</strong> {values.tipoServico}
             </Text>
 
             <Text>
@@ -342,12 +452,34 @@ const ResumoAgendamento = ({ form, user, professor }) => {
                 {values.horario?.[1]?.format("HH:mm")}
             </Text>
 
-            <Text>
-                <strong>Datas:</strong>{" "}
-                {values.datas
-                    ?.map((data) => data.format("DD/MM/YYYY"))
-                    .join(", ")}
-            </Text>
+            {values.tipoAula === "AULA_MENSAL" ? (
+                <>
+                    <Text>
+                        <strong>Data de vencimento:</strong>{" "}
+                        {values.dataVencimento?.format("DD/MM/YYYY")}
+                    </Text>
+
+                    <Text>
+                        <strong>Dias da semana:</strong>{" "}
+                        {values.diasSemana?.join(", ")}
+                    </Text>
+                </>
+            ) : (
+                <Text>
+                    <strong>Datas:</strong>{" "}
+                    {Array.isArray(values.datas)
+                        ? values.datas
+                            .map((data) => data.format("DD/MM/YYYY"))
+                            .join(", ")
+                        : values.datas?.format("DD/MM/YYYY")}
+                </Text>
+            )}
+
+            {values.tipoAula === "PACOTE_AULA" && (
+                <Text>
+                    <strong>Quantidade de aulas:</strong> {values.qtdAulas}
+                </Text>
+            )}
 
             <Text>
                 <strong>Valor:</strong> R$ {values.valorTotal}
@@ -364,16 +496,52 @@ const ResumoAgendamento = ({ form, user, professor }) => {
     );
 };
 
-const getFieldsByStep = (step) => {
-    const fields = {
-        0: ["idProfessor"],
-        1: ["tipoServico", "descricaoServico"],
-        2: ["endereco", "horario", "datas"],
-        3: ["valorTotal", "metodoPagamento"],
-        4: [],
-    };
+const getFieldsByStep = (step, tipoAula) => {
+    switch (step) {
+        case 0:
+            return ["idProfessor"];
 
-    return fields[step];
+        case 1:
+            return ["tipoAula", "tipoServico"];
+
+        case 2:
+            if (tipoAula === "AULA_UNICA") {
+                return [
+                    "endereco",
+                    "horario",
+                    "datas",
+                ];
+            }
+
+            if (tipoAula === "PACOTE_AULA") {
+                return [
+                    "endereco",
+                    "horario",
+                    "qtdAulas",
+                    "datas",
+                ];
+            }
+
+            if (tipoAula === "AULA_MENSAL") {
+                return [
+                    "endereco",
+                    "horario",
+                    "dataVencimento",
+                    "diasSemana",
+                ];
+            }
+
+            return [];
+
+        case 3:
+            return [
+                "valorTotal",
+                "metodoPagamento",
+            ];
+
+        default:
+            return [];
+    }
 };
 
 export default AgendamentoModal;

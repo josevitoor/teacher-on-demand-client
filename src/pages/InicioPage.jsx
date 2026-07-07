@@ -119,18 +119,21 @@ const InicioPage = () => {
             ) : (
                 <Row gutter={[16, 16]}>
                     {agenda.map((item) => (
-                        ((currentProfile == "PROFESSOR" && item.statusContrato != "RECUSADO" && item.statusContrato != "CANCELADO") || (currentProfile != "PROFESSOR")) && (
+                        ((currentProfile === "PROFESSOR" &&
+                            item.statusContrato !== "RECUSADO" &&
+                            item.statusContrato !== "CANCELADO") ||
+                            currentProfile !== "PROFESSOR") && (
                             <Col
-                                key={`${item.idAula}-${item.dataAula}`}
+                                key={item.idAula}
                                 xs={24}
                                 sm={24}
                                 md={12}
-                                lg={8}
-                                xl={6}
+                                lg={12}
+                                xl={8}
                             >
                                 <Card
                                     hoverable
-                                    title={formatarData(item.dataAula)}
+                                    title={getTituloAgenda(item)}
                                     extra={
                                         <Tag color={getStatusColor(item.statusContrato)}>
                                             {formatarStatus(item.statusContrato)}
@@ -148,8 +151,31 @@ const InicioPage = () => {
                                         </Text>
 
                                         <Text>
+                                            <strong>Tipo:</strong> {formatarTipoAula(item.tipoAula)}
+                                        </Text>
+
+                                        <Text>
                                             <strong>Serviço:</strong> {item.servico}
                                         </Text>
+
+                                        {item.tipoAula === "AULA_MENSAL" ? (
+                                            <>
+                                                <Text>
+                                                    <strong>Vencimento:</strong>{" "}
+                                                    {formatarData(item.dataVencimento)}
+                                                </Text>
+
+                                                <Text>
+                                                    <strong>Dias:</strong>{" "}
+                                                    {item.diasSemana?.join(", ")}
+                                                </Text>
+                                            </>
+                                        ) : (
+                                            <Text>
+                                                <strong>Datas:</strong>{" "}
+                                                {item.datas?.map(formatarData).join(", ")}
+                                            </Text>
+                                        )}
 
                                         <Text>
                                             <strong>Professor:</strong> {item.professor}
@@ -159,25 +185,26 @@ const InicioPage = () => {
                                             <strong>Contratante:</strong> {item.contratante}
                                         </Text>
 
-                                        {item.statusContrato === "AGUARDANDO_APROVACAO" && currentProfile === "PROFESSOR" && (
-                                            <Space style={{ marginTop: 8 }}>
-                                                <Button
-                                                    type="primary"
-                                                    size="small"
-                                                    onClick={() => handleAprovar(item.idContrato)}
-                                                >
-                                                    Aprovar
-                                                </Button>
+                                        {item.statusContrato === "AGUARDANDO_APROVACAO" &&
+                                            currentProfile === "PROFESSOR" && (
+                                                <Space style={{ marginTop: 8 }}>
+                                                    <Button
+                                                        type="primary"
+                                                        size="small"
+                                                        onClick={() => handleAprovar(item.idContrato)}
+                                                    >
+                                                        Aprovar
+                                                    </Button>
 
-                                                <Button
-                                                    danger
-                                                    size="small"
-                                                    onClick={() => handleRecusar(item.idContrato)}
-                                                >
-                                                    Recusar
-                                                </Button>
-                                            </Space>
-                                        )}
+                                                    <Button
+                                                        danger
+                                                        size="small"
+                                                        onClick={() => handleRecusar(item.idContrato)}
+                                                    >
+                                                        Recusar
+                                                    </Button>
+                                                </Space>
+                                            )}
                                     </Space>
                                 </Card>
                             </Col>
@@ -216,6 +243,28 @@ const getStatusColor = (status) => {
     };
 
     return colors[status] || "default";
+};
+
+const getTituloAgenda = (item) => {
+    if (item.tipoAula === "AULA_MENSAL") {
+        return "Aula mensal";
+    }
+
+    if (item.datas?.length === 1) {
+        return formatarData(item.datas[0]);
+    }
+
+    return `${item.datas?.length || 0} aulas agendadas`;
+};
+
+const formatarTipoAula = (tipo) => {
+    const labels = {
+        AULA_UNICA: "Aula única",
+        PACOTE_AULA: "Pacote de aulas",
+        AULA_MENSAL: "Aula mensal",
+    };
+
+    return labels[tipo] || tipo;
 };
 
 export default InicioPage;
